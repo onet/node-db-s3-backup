@@ -33,6 +33,6 @@
   },
   "redis": {
     "path": "absolute_path_to_redisdump",
-    "name": "dump_name_without_extension"
+    "name": "archive_name_over_s3"
   }
 }

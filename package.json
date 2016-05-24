@@ -1,24 +1,23 @@
 {
-  "name": "mongodb_s3_backup",
+  "name": "db_s3_backup",
   "version": "0.0.8",
-  "description": "A tool to help backup your mongodb databases to s3.",
+  "description": "A tool to help backup your mongodb and redis databases to s3.",
   "main": "index.js",
   "bin": {
-    "mongodb_s3_backup": "./bin/mongodb_s3_backup.js"
+    "db_s3_backup": "./bin/db_s3_backup.js"
   },
   "preferGlobal": "true",
   "scripts": {
-    "start": "node ./bin/mongodb_s3_backup.js ./config.json",
+    "start": "node ./bin/db_s3_backup.js ./config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": "https://github.com/theycallmeswift/node-mongodb-s3-backup.git",
   "keywords": [
-    "Mongodb",
+    "mongodb",
+    "redis",
+    "db",
     "S3",
     "backup"
   ],
-  "author": "Swift <theycallmeswift@gmail.com>",
-  "license": "Beerware",
   "dependencies": {
     "async": "~0.1.22",
     "cli": "~0.4.4-2",

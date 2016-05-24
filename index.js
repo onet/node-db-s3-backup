@@ -5,7 +5,7 @@ var exec = require('child_process').exec
   , path = require('path')
   , domain = require('domain')
   , d = domain.create()
-  , request = require("request")
+  , request = require('request')
   , fs = require('fs');
 
 /**
@@ -30,7 +30,7 @@ function log(message, tag) {
   };
 
   currentTag = tags[tag] || function(str) { return str; };
-  util.log((currentTag("[" + tag + "] ") + message).replace(/(\n|\r|\r\n)$/, ''));
+  util.log((currentTag('[' + tag + '] ') + message).replace(/(\n|\r|\r\n)$/, ''));
 }
 
 /**
@@ -70,7 +70,7 @@ function removeRF(target, callback) {
     if (!exists) {
       return callback(null);
     }
-    log("Removing " + target, 'info');
+    log('Removing ' + target, 'info');
     exec( 'rm -rf ' + target, callback);
   });
 }
@@ -120,7 +120,7 @@ function mongoDump(options, directory, callback) {
       log('mongodump executed successfully', 'info');
       callback(null);
     } else {
-      callback(new Error("Mongodump exited with code " + code));
+      callback(new Error('Mongodump exited with code ' + code));
     }
   });
 }
@@ -159,7 +159,7 @@ function compressDirectory(directory, input, output, callback) {
       log('successfully compress directory', 'info');
       callback(null);
     } else {
-      callback(new Error("Tar exited with code " + code));
+      callback(new Error('Tar exited with code ' + code));
     }
   });
 }
@@ -184,11 +184,16 @@ function sendToS3(options, directory, target, callback) {
   callback = callback || function() { };
 
   // Deleting destination because it's not an explicitly named knox option
-  delete options.destination;
+  var knoxOption = {
+    key: options.key,
+    secret: options.secret,
+    bucket: options.bucket,
+    encrypt: options.encrypt
+   }
   s3client = knox.createClient(options);
 
   if (options.encrypt)
-    headers = {"x-amz-server-side-encryption": "AES256"}
+    headers = {'x-amz-server-side-encryption': 'AES256'}
 
   log('Attemping to upload ' + target + ' to the ' + options.bucket + ' s3 bucket');
   s3client.putFile(sourceFile, path.join(destination, target), headers, function(err, res){
@@ -220,14 +225,14 @@ function copyFile(source, target, cb) {
   var cbCalled = false;
 
   var rd = fs.createReadStream(source);
-  rd.on("error", function(err) {
+  rd.on('error', function(err) {
     done(err);
   });
   var wr = fs.createWriteStream(target);
-  wr.on("error", function(err) {
+  wr.on('error', function(err) {
     done(err);
   });
-  wr.on("close", function(ex) {
+  wr.on('close', function(ex) {
     done();
   });
   rd.pipe(wr);
@@ -240,6 +245,8 @@ function copyFile(source, target, cb) {
   }
 }
 
+
+
 /**
  * sync
  *
@@ -251,30 +258,37 @@ function copyFile(source, target, cb) {
  * @param callback        callback(err)
  */
 function sync(mongodbConfig, s3Config, webhookConfig, redisConfig, callback) {
-  var tmpDir = path.join(require('os').tmpDir(), 'mongodb_s3_backup')
-    , backupDir = path.join(tmpDir, mongodbConfig.db)
-    , redisBackupDir = path.join(tmpDir, redisConfig.name)
-    , redisBackupPath = path.join(redisBackupDir, redisConfig.name)
-    , archiveName = getArchiveName(mongodbConfig.db)
-    , redisArchiveName = getArchiveName(redisConfig.name)
+  var tmpDir = path.join(require('os').tmpDir(), 'node_s3_backup')
     , async = require('async')
     , tmpDirCleanupFns;
 
   callback = callback || function() { };
 
-
   tmpDirCleanupFns = [
     async.apply(removeRF, tmpDir),
   ];
-  async.series(tmpDirCleanupFns.concat([
-    async.apply(mongoDump, mongodbConfig, tmpDir),
-    async.apply(fs.mkdir, redisBackupDir),
-    async.apply(copyFile, redisConfig.path, redisBackupPath),
+
+  var functionSequence = tmpDirCleanupFns.slice();
+  if (mongodbConfig) {
+    var backupDir = path.join(tmpDir, mongodbConfig.db)
+    var archiveName = getArchiveName(mongodbConfig.db)
+    functionSequence.push(async.apply(mongoDump, mongodbConfig, tmpDir),
     async.apply(compressDirectory, tmpDir, mongodbConfig.db, archiveName),
-    async.apply(compressDirectory, tmpDir, redisConfig.name, redisArchiveName),
-    d.bind(async.apply(sendToS3, s3Config.mongo, tmpDir, archiveName)), // this function sometimes throws EPIPE errors
-    d.bind(async.apply(sendToS3, s3Config.redis, tmpDir, redisArchiveName)) // this function sometimes throws EPIPE errors
-  ]), function(err) {
+    d.bind(async.apply(sendToS3, s3Config.mongo, tmpDir, archiveName)));
+  } else {
+    functionSequence.push(async.apply(fs.mkdir, tmpDir))
+  }
+
+  if (redisConfig) {
+    var redisBackupDir = path.join(tmpDir, redisConfig.name)
+    var redisBackupPath = path.join(redisBackupDir, redisConfig.name)
+    var redisArchiveName = getArchiveName(redisConfig.name)
+    functionSequence.push(async.apply(fs.mkdir, redisBackupDir),
+      async.apply(copyFile, redisConfig.path, redisBackupPath),
+      async.apply(compressDirectory, tmpDir, redisConfig.name, redisArchiveName),
+      d.bind(async.apply(sendToS3, s3Config.redis, tmpDir, redisArchiveName)));
+  }
+  async.series(functionSequence, function(err) {
     var options = {
       method: 'POST',
       url: webhookConfig.url,
@@ -288,18 +302,17 @@ function sync(mongodbConfig, s3Config, webhookConfig, redisConfig, callback) {
       log(err, 'error');
     } else {
       options.form =  { payload: '{"channel": "' + webhookConfig.channel + '", "username": "' + webhookConfig.username + '", "text": "mongodb backup successful" , "icon_emoji": "' + webhookConfig.emoji + '"}' }
-      log('Successfully backed up ' + mongodbConfig.db);
+      log('Successfully backed up');
     }
-    request(options, function (error, response, body) {
+    // cleanup folders
+    async.series(tmpDirCleanupFns.concat([async.apply(request, options)]), function(err) {
       if (err) {
-        log(err, 'error');
+        log('Un-successful notified webhook');
+        return callback(err);
       } else {
         log('Successfully notified webhook');
+        return callback(err);
       }
-    });
-    // cleanup folders
-    async.series(tmpDirCleanupFns, function() {
-      return callback(err);
     });
   });
 

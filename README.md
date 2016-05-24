@@ -1,12 +1,12 @@
-# Node MongoDB / S3 Backup
+# Node MongoDB and Redis to S3 Backup
 
-This is a package that makes backing up your mongo databases to S3 simple.
-The binary file is a node cronjob that runs at midnight every day and backs up
+This is a package that makes backing up your mongo and redis databases to S3 simple.
+The binary file is a node cronjob that runs at user specified time and backs up
 the database specified in the config file.
 
 ## Installation
 
-    npm install
+    npm install db-s3-backup
 
 ## Configuration
 
@@ -42,18 +42,16 @@ The file should have the following format:
         "time": "11:59",
       },
       "webhook": {
-        "url": "webhook-request-url",
-        "channel": "channel-name",
+        "url": "webhook_request_url",
+        "channel": "channel_name",
         "username": "username",
         "emoji": "emoji"
       },
       "redis": {
         "path": "absolute_path_to_redisdump",
-        "name": "dump_name_without_extension"
+        "name": "archive_name_over_s3"
       }
     }
-
-All options in the "s3" object, except for desination, will be directly passed to knox, therefore, you can include any of the options listed [in the knox documentation](https://github.com/LearnBoost/knox#client-creation-options "Knox README").
 
 ### Crontabs
 
@@ -83,11 +81,11 @@ You must first `npm install time` to use "timezone" specification.
 
 To start a long-running process with scheduled cron job:
 
-    mongodb_s3_backup <path to config file>
+    node-db-s3-backup <path to config file>
 
 To execute a backup immediately and exit:
 
-    mongodb_s3_backup -n <path to config file>
+    node-db-s3-backup -n <path to config file>
 
 Alternatively (using config.json in root folder)
     npm start
