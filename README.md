@@ -23,12 +23,20 @@ The file should have the following format:
         "db": "database_to_backup"
       },
       "s3": {
-        "key": "your_s3_key",
-        "secret": "your_s3_secret",
-        "bucket": "s3_bucket_to_upload_to",
-        "destination": "/",
-        "encrypt": true,
-        "region": "s3_region_to_use"
+        "mongo": {
+          "key": "your_s3_key",
+          "secret": "your_s3_secret",
+          "bucket": "s3_bucket_to_upload_to",
+          "destination": "/mongo",
+          "encrypt": true,
+        },
+        "redis": {
+          "key": "your_s3_key",
+          "secret": "your_s3_secret",
+          "bucket": "s3_bucket_to_upload_to",
+          "destination": "/redis",
+          "encrypt": true,
+        }
       },
       "cron": {
         "time": "11:59",
@@ -38,6 +46,10 @@ The file should have the following format:
         "channel": "channel-name",
         "username": "username",
         "emoji": "emoji"
+      },
+      "redis": {
+        "path": "absolute_path_to_redisdump",
+        "name": "dump_name_without_extension"
       }
     }
 

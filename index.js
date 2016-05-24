@@ -5,7 +5,8 @@ var exec = require('child_process').exec
   , path = require('path')
   , domain = require('domain')
   , d = domain.create()
-  , request = require("request");
+  , request = require("request")
+  , fs = require('fs');
 
 /**
  * log
@@ -62,7 +63,6 @@ function getArchiveName(databaseName) {
  * @param callback     callback(error)
  */
 function removeRF(target, callback) {
-  var fs = require('fs');
 
   callback = callback || function() { };
 
@@ -216,6 +216,30 @@ function sendToS3(options, directory, target, callback) {
   });
 }
 
+function copyFile(source, target, cb) {
+  var cbCalled = false;
+
+  var rd = fs.createReadStream(source);
+  rd.on("error", function(err) {
+    done(err);
+  });
+  var wr = fs.createWriteStream(target);
+  wr.on("error", function(err) {
+    done(err);
+  });
+  wr.on("close", function(ex) {
+    done();
+  });
+  rd.pipe(wr);
+
+  function done(err) {
+    if (!cbCalled) {
+      cb(err);
+      cbCalled = true;
+    }
+  }
+}
+
 /**
  * sync
  *
@@ -226,24 +250,30 @@ function sendToS3(options, directory, target, callback) {
  * @param s3Config        s3 config [key, secret, bucket]
  * @param callback        callback(err)
  */
-function sync(mongodbConfig, s3Config, webhookConfig, callback) {
+function sync(mongodbConfig, s3Config, webhookConfig, redisConfig, callback) {
   var tmpDir = path.join(require('os').tmpDir(), 'mongodb_s3_backup')
     , backupDir = path.join(tmpDir, mongodbConfig.db)
+    , redisBackupDir = path.join(tmpDir, redisConfig.name)
+    , redisBackupPath = path.join(redisBackupDir, redisConfig.name)
     , archiveName = getArchiveName(mongodbConfig.db)
+    , redisArchiveName = getArchiveName(redisConfig.name)
     , async = require('async')
     , tmpDirCleanupFns;
 
   callback = callback || function() { };
 
-  tmpDirCleanupFns = [
-    async.apply(removeRF, backupDir),
-    async.apply(removeRF, path.join(tmpDir, archiveName))
-  ];
 
+  tmpDirCleanupFns = [
+    async.apply(removeRF, tmpDir),
+  ];
   async.series(tmpDirCleanupFns.concat([
     async.apply(mongoDump, mongodbConfig, tmpDir),
+    async.apply(fs.mkdir, redisBackupDir),
+    async.apply(copyFile, redisConfig.path, redisBackupPath),
     async.apply(compressDirectory, tmpDir, mongodbConfig.db, archiveName),
-    d.bind(async.apply(sendToS3, s3Config, tmpDir, archiveName)) // this function sometimes throws EPIPE errors
+    async.apply(compressDirectory, tmpDir, redisConfig.name, redisArchiveName),
+    d.bind(async.apply(sendToS3, s3Config.mongo, tmpDir, archiveName)), // this function sometimes throws EPIPE errors
+    d.bind(async.apply(sendToS3, s3Config.redis, tmpDir, redisArchiveName)) // this function sometimes throws EPIPE errors
   ]), function(err) {
     var options = {
       method: 'POST',

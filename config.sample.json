@@ -7,11 +7,20 @@
     "db": "database_to_backup"
   },
   "s3": {
-    "key": "your_s3_key",
-    "secret": "your_s3_secret",
-    "bucket": "s3_bucket_to_upload_to",
-    "destination": "/",
-    "encrypt": true,
+    "mongo": {
+      "key": "your_s3_key",
+      "secret": "your_s3_secret",
+      "bucket": "s3_bucket_to_upload_to",
+      "destination": "/mongo",
+      "encrypt": true,
+    },
+    "redis": {
+      "key": "your_s3_key",
+      "secret": "your_s3_secret",
+      "bucket": "s3_bucket_to_upload_to",
+      "destination": "/redis",
+      "encrypt": true,
+    }
   },
   "cron": {
     "crontab": "* * * * * *"
@@ -21,5 +30,9 @@
     "channel": "channel-name",
     "username": "username",
     "emoji": "emoji"
+  },
+  "redis": {
+    "path": "absolute_path_to_redisdump",
+    "name": "dump_name_without_extension"
   }
 }
