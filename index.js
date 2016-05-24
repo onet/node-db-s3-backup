@@ -4,7 +4,8 @@ var exec = require('child_process').exec
   , spawn = require('child_process').spawn
   , path = require('path')
   , domain = require('domain')
-  , d = domain.create();
+  , d = domain.create()
+  , request = require("request");
 
 /**
  * log
@@ -225,7 +226,7 @@ function sendToS3(options, directory, target, callback) {
  * @param s3Config        s3 config [key, secret, bucket]
  * @param callback        callback(err)
  */
-function sync(mongodbConfig, s3Config, callback) {
+function sync(mongodbConfig, s3Config, webhookConfig, callback) {
   var tmpDir = path.join(require('os').tmpDir(), 'mongodb_s3_backup')
     , backupDir = path.join(tmpDir, mongodbConfig.db)
     , archiveName = getArchiveName(mongodbConfig.db)
@@ -244,11 +245,29 @@ function sync(mongodbConfig, s3Config, callback) {
     async.apply(compressDirectory, tmpDir, mongodbConfig.db, archiveName),
     d.bind(async.apply(sendToS3, s3Config, tmpDir, archiveName)) // this function sometimes throws EPIPE errors
   ]), function(err) {
+    var options = {
+      method: 'POST',
+      url: webhookConfig.url,
+      headers:
+      {
+        'content-type': 'application/x-www-form-urlencoded'
+      }
+    };
     if(err) {
+      options.form =  { payload: '{"channel": "' + webhookConfig.channel + '", "username": "' + webhookConfig.username + '", "text": "mongodb backup un-successful" , "icon_emoji": "' + webhookConfig.emoji + '"}' }
       log(err, 'error');
     } else {
+      options.form =  { payload: '{"channel": "' + webhookConfig.channel + '", "username": "' + webhookConfig.username + '", "text": "mongodb backup successful" , "icon_emoji": "' + webhookConfig.emoji + '"}' }
       log('Successfully backed up ' + mongodbConfig.db);
     }
+    console.log(options);
+    request(options, function (error, response, body) {
+      if (err) {
+        log(err, 'error');
+      } else {
+        log('Successfully notified webhook');
+      }
+    });
     // cleanup folders
     async.series(tmpDirCleanupFns, function() {
       return callback(err);

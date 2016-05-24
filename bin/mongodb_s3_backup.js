@@ -61,7 +61,7 @@ if(options.now) {
   }
 
   new cronJob(crontab, function(){
-    backup.sync(config.mongodb, config.s3);
+    backup.sync(config.mongodb, config.s3, config.webhook);
   }, null, true, timezone);
   backup.log('MongoDB S3 Backup Successfully scheduled (' + crontab + ')');
 }
