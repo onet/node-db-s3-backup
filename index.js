@@ -260,7 +260,6 @@ function sync(mongodbConfig, s3Config, webhookConfig, callback) {
       options.form =  { payload: '{"channel": "' + webhookConfig.channel + '", "username": "' + webhookConfig.username + '", "text": "mongodb backup successful" , "icon_emoji": "' + webhookConfig.emoji + '"}' }
       log('Successfully backed up ' + mongodbConfig.db);
     }
-    console.log(options);
     request(options, function (error, response, body) {
       if (err) {
         log(err, 'error');

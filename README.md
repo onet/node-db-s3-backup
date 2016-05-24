@@ -6,7 +6,7 @@ the database specified in the config file.
 
 ## Installation
 
-    npm install mongodb_s3_backup -g
+    npm install
 
 ## Configuration
 
@@ -32,6 +32,12 @@ The file should have the following format:
       },
       "cron": {
         "time": "11:59",
+      },
+      "webhook": {
+        "url": "webhook-request-url",
+        "channel": "channel-name",
+        "username": "username",
+        "emoji": "emoji"
       }
     }
 
@@ -70,3 +76,6 @@ To start a long-running process with scheduled cron job:
 To execute a backup immediately and exit:
 
     mongodb_s3_backup -n <path to config file>
+
+Alternatively (using config.json in root folder)
+    npm start
