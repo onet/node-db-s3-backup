@@ -1,6 +1,6 @@
 {
-  "name": "db_s3_backup",
-  "version": "0.0.8",
+  "name": "db-s3-backup",
+  "version": "0.0.1",
   "description": "A tool to help backup your mongodb and redis databases to s3.",
   "main": "index.js",
   "bin": {
