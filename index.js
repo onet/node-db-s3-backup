@@ -183,7 +183,7 @@ function sendToS3(options, directory, target, callback) {
 
   callback = callback || function() { };
 
-  // Deleting destination because it's not an explicitly named knox option
+
   var knoxOption = {
     key: options.key,
     secret: options.secret,
@@ -298,10 +298,10 @@ function sync(mongodbConfig, s3Config, webhookConfig, redisConfig, callback) {
       }
     };
     if(err) {
-      options.form =  { payload: '{"channel": "' + webhookConfig.channel + '", "username": "' + webhookConfig.username + '", "text": "mongodb backup un-successful" , "icon_emoji": "' + webhookConfig.emoji + '"}' }
+      options.form =  { payload: '{"channel": "' + webhookConfig.channel + '", "username": "' + webhookConfig.username + '", "text": "Backup Un-successful" , "icon_emoji": "' + webhookConfig.emoji + '"}' }
       log(err, 'error');
     } else {
-      options.form =  { payload: '{"channel": "' + webhookConfig.channel + '", "username": "' + webhookConfig.username + '", "text": "mongodb backup successful" , "icon_emoji": "' + webhookConfig.emoji + '"}' }
+      options.form =  { payload: '{"channel": "' + webhookConfig.channel + '", "username": "' + webhookConfig.username + '", "text": "Backup Successful" , "icon_emoji": "' + webhookConfig.emoji + '"}' }
       log('Successfully backed up');
     }
     // cleanup folders
