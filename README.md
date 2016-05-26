@@ -6,7 +6,7 @@ the database specified in the config file.
 
 ## Installation
 
-    npm install db-s3-backup
+    npm install -g db-s3-backup
 
 ## Configuration
 
@@ -81,11 +81,11 @@ You must first `npm install time` to use "timezone" specification.
 
 To start a long-running process with scheduled cron job:
 
-    node-db-s3-backup <path to config file>
+    db-s3-backup <path to config file>
 
 To execute a backup immediately and exit:
 
-    node-db-s3-backup -n <path to config file>
+    db-s3-backup -n <path to config file>
 
 Alternatively (using config.json in root folder)
     npm start

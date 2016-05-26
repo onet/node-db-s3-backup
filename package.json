@@ -4,11 +4,11 @@
   "description": "A tool to help backup your mongodb and redis databases to s3.",
   "main": "index.js",
   "bin": {
-    "db_s3_backup": "./bin/db_s3_backup.js"
+    "db-s3-backup": "./bin/db-s3-backup.js"
   },
   "preferGlobal": "true",
   "scripts": {
-    "start": "node ./bin/db_s3_backup.js ./config.json",
+    "start": "node ./bin/db-s3-backup.js ./config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
