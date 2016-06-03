@@ -1,8 +1,10 @@
-# Node MongoDB and Redis to S3 Backup
+# MongoDB and Redis Backup to S3
 
 This is a package that makes backing up your mongo and redis databases to S3 simple.
 The binary file is a node cronjob that runs at user specified time and backs up
 the database specified in the config file.
+
+> Based on [node-mongodb-s3-backup](https://github.com/theycallmeswift/node-mongodb-s3-backup)
 
 ## Installation
 
@@ -89,3 +91,7 @@ To execute a backup immediately and exit:
 
 Alternatively (using config.json in root folder)
     npm start
+
+## License
+
+MIT
