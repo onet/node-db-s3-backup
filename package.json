@@ -1,6 +1,6 @@
 {
   "name": "db-s3-backup",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A tool to help backup your mongodb and redis databases to s3.",
   "main": "index.js",
   "bin": {
@@ -11,6 +11,10 @@
     "start": "node ./bin/db-s3-backup.js ./config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bugs": {
+    "url": "https://github.com/getstrike/node-db-s3-backup/issues"
+  },
+  "homepage": "https://github.com/getstrike/node-db-s3-backup",
   "keywords": [
     "mongodb",
     "redis",
