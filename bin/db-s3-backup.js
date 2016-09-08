@@ -33,7 +33,7 @@ backup.log('Loading config file (' + configPath + ')');
 config = require(configPath);
 
 if(options.now) {
-  backup.sync(config.mongodb, config.s3, config.webhook, config.redis, function(err) {
+  backup.sync(config.mongodb, config.s3, config.webhook, config.redis, config.mysql, function(err) {
     process.exit(err ? 1 : 0);
   });
 } else {

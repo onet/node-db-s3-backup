@@ -1,4 +1,4 @@
-# MongoDB and Redis Backup to S3
+# MongoDB, Mysql and Redis Backup to S3
 
 This is a package that makes backing up your mongo and redis databases to S3 simple.
 The binary file is a node cronjob that runs at user specified time and backs up
@@ -7,15 +7,16 @@ the database specified in the config file.
 > Based on [node-mongodb-s3-backup](https://github.com/theycallmeswift/node-mongodb-s3-backup)
 
 ## Installation
-
+```sh
     npm install -g db-s3-backup
-
+```
 ## Configuration
 
 To configure the backup, you need to pass the binary a JSON configuration file.
 There is a sample configuration file supplied in the package (`config.sample.json`).
 The file should have the following format:
 
+```js
     {
       "mongodb": {
         "host": "localhost",
@@ -24,28 +25,43 @@ The file should have the following format:
         "password": false,
         "db": "database_to_backup"
       },
+      "mysql": {
+        "username": "root",
+        "password": "",
+        "host": false,
+        "port": false,
+        "db": "database_to_backup"
+      },
       "s3": {
         "mongo": {
           "key": "your_s3_key",
           "secret": "your_s3_secret",
           "bucket": "s3_bucket_to_upload_to",
           "destination": "/mongo",
-          "encrypt": true,
+          "encrypt": true
         },
         "redis": {
           "key": "your_s3_key",
           "secret": "your_s3_secret",
           "bucket": "s3_bucket_to_upload_to",
           "destination": "/redis",
-          "encrypt": true,
+          "encrypt": true
+        },
+    
+        "mysql": {
+          "key": "your_s3_key",
+          "secret": "your_s3_secret",
+          "bucket": "s3_bucket_to_upload_to",
+          "destination": "/mysql",
+          "encrypt": true
         }
       },
       "cron": {
-        "time": "11:59",
+        "crontab": "* * * * * *"
       },
       "webhook": {
-        "url": "webhook_request_url",
-        "channel": "channel_name",
+        "url": "webhook-request-url",
+        "channel": "channel-name",
         "username": "username",
         "emoji": "emoji"
       },
@@ -54,6 +70,7 @@ The file should have the following format:
         "name": "archive_name_over_s3"
       }
     }
+```
 
 ### Crontabs
 
