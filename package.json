@@ -11,6 +11,8 @@
     "start": "node ./bin/db-s3-backup.js ./config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "license": "Beerware",
+  "author": "Swift <theycallmeswift@gmail.com>, Team Strike <dev@getstrike.co>",
   "bugs": {
     "url": "https://github.com/getstrike/node-db-s3-backup/issues"
   },
