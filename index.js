@@ -126,6 +126,52 @@ function mongoDump(options, directory, callback) {
 }
 
 /**
+ * mysqlDump
+ *
+ * Calls mongodump on a specified database.
+ *
+ * @param options    Mysql connection options [username, password, db]
+ * @param directory  Directory to dump the database to
+ * @param callback   callback(err)
+ */
+function mysqlDump(options, directory, callback) {
+  var mysqldump
+      , mysqlOptions;
+
+  callback = callback || function() { };
+
+  directory.replace(/\/$/, "");
+
+  var cmd = 'mysqldump -u'+options.username+' -p'+options.password;
+
+  if(options.hostname &&options.port){
+    cmd += ' -h'+options.hostname+':'+options.port;
+  }
+
+  cmd += ' '+options.db+' > '+directory+'/'+options.db;
+
+  log('Starting mysqldump of ' + options.db, 'info');
+  mysqldump = exec(cmd);
+
+  mysqldump.stdout.on('data', function (data) {
+    log(data);
+  });
+
+  mysqldump.stderr.on('data', function (data) {
+    log(data, 'error');
+  });
+
+  mysqldump.on('exit', function (code) {
+    if(code === 0) {
+      log('mysqldump executed successfully', 'info');
+      callback(null);
+    } else {
+      callback(new Error('Mysqldump exited with code ' + code));
+    }
+  });
+}
+
+/**
  * compressDirectory
  *
  * Compressed the directory so we can upload it to S3.
@@ -256,8 +302,10 @@ function copyFile(source, target, cb) {
  * @param mongodbConfig   mongodb config [host, port, username, password, db]
  * @param s3Config        s3 config [key, secret, bucket]
  * @param callback        callback(err)
+ * @param redisConfig     redis config files
+ * @param mysqlConfig     Mysql Config files
  */
-function sync(mongodbConfig, s3Config, webhookConfig, redisConfig, callback) {
+function sync(mongodbConfig, s3Config, webhookConfig, redisConfig, mysqlConfig, callback) {
   var tmpDir = path.join(require('os').tmpDir(), 'node_s3_backup')
     , async = require('async')
     , tmpDirCleanupFns;
@@ -270,19 +318,28 @@ function sync(mongodbConfig, s3Config, webhookConfig, redisConfig, callback) {
 
   var functionSequence = tmpDirCleanupFns.slice();
   if (mongodbConfig) {
-    var backupDir = path.join(tmpDir, mongodbConfig.db)
-    var archiveName = getArchiveName(mongodbConfig.db)
+    var backupDir = path.join(tmpDir, mongodbConfig.db);
+    var archiveName = getArchiveName(mongodbConfig.db);
     functionSequence.push(async.apply(mongoDump, mongodbConfig, tmpDir),
     async.apply(compressDirectory, tmpDir, mongodbConfig.db, archiveName),
     d.bind(async.apply(sendToS3, s3Config.mongo, tmpDir, archiveName)));
   } else {
     functionSequence.push(async.apply(fs.mkdir, tmpDir))
   }
+  if (mysqlConfig) {
+      var mysqlbackupDir = path.join(tmpDir, mysqlConfig.db);
+      var mysqlarchiveName = getArchiveName(mysqlConfig.db);
+      functionSequence.push(async.apply(mysqlDump, mysqlConfig, tmpDir),
+          async.apply(compressDirectory, tmpDir, mysqlConfig.db, mysqlarchiveName),
+          d.bind(async.apply(sendToS3, s3Config.mysql, tmpDir, mysqlarchiveName)));
+  } else {
+      functionSequence.push(async.apply(fs.mkdir, tmpDir))
+  }
 
   if (redisConfig) {
-    var redisBackupDir = path.join(tmpDir, redisConfig.name)
-    var redisBackupPath = path.join(redisBackupDir, redisConfig.name)
-    var redisArchiveName = getArchiveName(redisConfig.name)
+    var redisBackupDir = path.join(tmpDir, redisConfig.name);
+    var redisBackupPath = path.join(redisBackupDir, redisConfig.name);
+    var redisArchiveName = getArchiveName(redisConfig.name);
     functionSequence.push(async.apply(fs.mkdir, redisBackupDir),
       async.apply(copyFile, redisConfig.path, redisBackupPath),
       async.apply(compressDirectory, tmpDir, redisConfig.name, redisArchiveName),
